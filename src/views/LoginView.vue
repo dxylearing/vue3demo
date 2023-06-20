@@ -35,11 +35,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, toRefs } from "vue";
+import { defineComponent, reactive, toRefs, ref } from "vue";
 import { LoginData } from "@/types/login";
-
+import { ElMessage, type FormInstance } from "element-plus";
+import { login } from "@/request/api";
+import { useRouter } from "vue-router";
 export default defineComponent({
   setup() {
+    const router = useRouter();
     const rules = {
       username: [
         {
@@ -68,10 +71,43 @@ export default defineComponent({
         },
       ],
     };
+    const ruleFormRef = ref<FormInstance>();
+    //登录
+    const submitForm = (formEl: FormInstance | undefined) => {
+      if (!formEl) return;
+      formEl.validate((valid) => {
+        if (valid) {
+          login(data.ruleForm)
+            .then((res) => {
+              console.log(res);
+              // 将token进行保存
+              localStorage.setItem("token", res.data.token);
+              // 跳转页面
+              router.push("/");
+              console.log(11111111, res);
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+        } else {
+          console.log("error submit!");
+          return false;
+        }
+      });
+    };
+
+    //重置
+    const resetForm = (formEl: FormInstance | undefined) => {
+      if (!formEl) return;
+      formEl.resetFields();
+    };
     const data = reactive(new LoginData());
     return {
       ...toRefs(data),
       rules,
+      ruleFormRef,
+      resetForm,
+      submitForm,
     };
   },
 });
